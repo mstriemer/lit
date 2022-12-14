@@ -68,6 +68,40 @@ suite('styleMap', () => {
     assert.equal(style.paddingLeft, '4px');
   });
 
+  test('render() noStyleAttribute', () => {
+    // Get the StyleMapDirective class indirectly, since it's not exported
+    const result = styleMap({});
+    // This property needs to remain unminified.
+    const StyleMapDirective = result['_$litDirective$'];
+
+    // Extend StyleMapDirective so we can test its render() method
+    class TestStyleMapDirective extends StyleMapDirective {
+      override update(
+        _part: AttributePart,
+        [styleInfo]: Parameters<this['render']>
+      ) {
+        return this.render(styleInfo);
+      }
+    }
+    const testStyleMap = directive(TestStyleMapDirective);
+    render(
+      html`<div
+        style=${testStyleMap({
+          color: 'red',
+          backgroundColor: 'blue',
+          ['padding-left']: '4px',
+          noStyleAttribute: 'true',
+        })}
+      ></div>`,
+      container
+    );
+    const div = container.firstElementChild as HTMLDivElement;
+    const style = div.style;
+    assert.equal(style.color, '');
+    assert.equal(style.backgroundColor, '');
+    assert.equal(style.paddingLeft, '');
+  });
+
   test('first render skips undefined properties', () => {
     renderStyleMap({marginTop: undefined, marginBottom: null});
     const el = container.firstElementChild as HTMLElement;
